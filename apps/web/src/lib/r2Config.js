@@ -2,7 +2,7 @@
  * Cloudflare R2 configuration for serving static assets.
  * The R2_BASE_URL should point to the public R2 bucket URL.
  */
-const R2_BASE_URL = import.meta.env.VITE_R2_BASE_URL || 'https://pub-78c336ff5be0419da423b98c4be32928.r2.dev/motionz';
+const R2_BASE_URL = import.meta.env.VITE_R2_BASE_URL || 'https://pub-dc2e74d5100540c98a1d252fa2cc7d0b.r2.dev';
 
 /**
  * Get the full R2 URL for a given asset path.

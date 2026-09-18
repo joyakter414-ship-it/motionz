@@ -45,7 +45,7 @@ export async function onRequestPost(context) {
 
     // Clean filename and make unique
     const safeName = (filename || `video_${Date.now()}.webm`).replace(/[^a-zA-Z0-9._-]/g, '_');
-    const key = `motionz/videos/${Date.now()}_${safeName}`;
+    const key = `videos/${Date.now()}_${safeName}`;
     const fileMime = (file.type && file.type !== 'application/octet-stream') ? file.type : 'video/webm';
 
     // Stream directly into Cloudflare R2
@@ -56,7 +56,7 @@ export async function onRequestPost(context) {
       },
     });
 
-    const publicUrl = `https://pub-78c336ff5be0419da423b98c4be32928.r2.dev/${key}`;
+    const publicUrl = `https://pub-dc2e74d5100540c98a1d252fa2cc7d0b.r2.dev/${key}`;
 
     return new Response(JSON.stringify({
       success: true,
