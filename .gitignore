@@ -8,4 +8,5 @@ apps/pocketbase/pb_snapshots/
 apps/web/plugins/
 *.db-wal
 *.db-shm
+apps/pocketbase/pocketbase*
 .DS_Store

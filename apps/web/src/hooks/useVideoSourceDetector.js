@@ -1,10 +1,11 @@
 import pb from '@/lib/pocketbaseClient.js';
+import R2_BASE_URL from '@/lib/r2Config.js';
 
 /**
  * Utility hook/function to detect video source type and extract video ID/URL.
  * 
  * @param {Object} video - The video record from PocketBase
- * @returns {Object} { type: 'video'|'youtube'|'vimeo', src: string, isValid: boolean }
+ * @returns {Object} { type: 'video'|'youtube'|'vimeo', src: string, fallbackType?: string, fallbackSrc?: string, isValid: boolean }
  */
 export function useVideoSourceDetector(video) {
   if (!video) return { isValid: false };
@@ -34,7 +35,17 @@ export function useVideoSourceDetector(video) {
     // YouTube pattern match (handles youtube.com/watch?v=ID, youtu.be/ID, youtube.com/embed/ID, youtube.com/shorts/ID)
     const ytMatch = url.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?|shorts)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i);
     if (ytMatch && ytMatch[1]) {
-      return { type: 'youtube', src: ytMatch[1], isValid: true };
+      const ytId = ytMatch[1];
+      if (R2_BASE_URL) {
+        return {
+          type: 'video',
+          src: `${R2_BASE_URL}/videos/${ytId}.webm`,
+          fallbackType: 'youtube',
+          fallbackSrc: ytId,
+          isValid: true
+        };
+      }
+      return { type: 'youtube', src: ytId, isValid: true };
     }
 
     // Vimeo pattern match
@@ -45,6 +56,15 @@ export function useVideoSourceDetector(video) {
 
     // Fallback: If it's exactly 11 chars, assume YouTube ID
     if (/^[a-zA-Z0-9_-]{11}$/.test(url)) {
+      if (R2_BASE_URL) {
+        return {
+          type: 'video',
+          src: `${R2_BASE_URL}/videos/${url}.webm`,
+          fallbackType: 'youtube',
+          fallbackSrc: url,
+          isValid: true
+        };
+      }
       return { type: 'youtube', src: url, isValid: true };
     }
     

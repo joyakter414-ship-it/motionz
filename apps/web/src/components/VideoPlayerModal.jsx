@@ -6,7 +6,9 @@ import { useVideoSourceDetector } from '@/hooks/useVideoSourceDetector.js';
 function VideoPlayerModal({ isOpen, onClose, video }) {
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
-  const { type, src, isValid } = useVideoSourceDetector(video);
+  const detected = useVideoSourceDetector(video);
+  const [activeType, setActiveType] = useState(detected.type);
+  const [activeSrc, setActiveSrc] = useState(detected.src);
 
   // Handle ESC key to close
   useEffect(() => {
@@ -23,7 +25,9 @@ function VideoPlayerModal({ isOpen, onClose, video }) {
   useEffect(() => {
     if (isOpen) {
       setIsLoading(true);
-      setHasError(!isValid);
+      setHasError(!detected.isValid);
+      setActiveType(detected.type);
+      setActiveSrc(detected.src);
       document.body.style.overflow = 'hidden'; // Prevent background scrolling
     } else {
       document.body.style.overflow = '';
@@ -31,7 +35,19 @@ function VideoPlayerModal({ isOpen, onClose, video }) {
     return () => {
       document.body.style.overflow = '';
     };
-  }, [isOpen, isValid, video]);
+  }, [isOpen, detected.isValid, detected.type, detected.src, video]);
+
+  const handleVideoError = () => {
+    if (activeType === 'video' && detected.fallbackType) {
+      // Gracefully switch to YouTube embed fallback
+      setActiveType(detected.fallbackType);
+      setActiveSrc(detected.fallbackSrc);
+      setIsLoading(true);
+    } else {
+      setHasError(true);
+      setIsLoading(false);
+    }
+  };
 
   if (!isOpen) return null;
 
@@ -81,21 +97,21 @@ function VideoPlayerModal({ isOpen, onClose, video }) {
           )}
 
           {/* Video Players */}
-          {!hasError && type === 'video' && (
+          {!hasError && activeType === 'video' && (
             <video
-              src={src}
+              src={activeSrc}
               controls
               autoPlay
               playsInline
               className="w-full h-full object-contain"
               onLoadedData={() => setIsLoading(false)}
-              onError={() => setHasError(true)}
+              onError={handleVideoError}
             />
           )}
 
-          {!hasError && type === 'youtube' && (
+          {!hasError && activeType === 'youtube' && (
             <iframe
-              src={`https://www.youtube.com/embed/${src}?autoplay=1&rel=0`}
+              src={`https://www.youtube.com/embed/${activeSrc}?autoplay=1&rel=0`}
               title={video?.title || 'YouTube video player'}
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
               allowFullScreen
@@ -105,9 +121,9 @@ function VideoPlayerModal({ isOpen, onClose, video }) {
             />
           )}
 
-          {!hasError && type === 'vimeo' && (
+          {!hasError && activeType === 'vimeo' && (
             <iframe
-              src={`https://player.vimeo.com/video/${src}?autoplay=1&title=0&byline=0&portrait=0`}
+              src={`https://player.vimeo.com/video/${activeSrc}?autoplay=1&title=0&byline=0&portrait=0`}
               title={video?.title || 'Vimeo video player'}
               allow="autoplay; fullscreen; picture-in-picture"
               allowFullScreen
