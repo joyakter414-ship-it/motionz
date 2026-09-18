@@ -134,12 +134,30 @@ function VideoFormModal({ isOpen, onClose, videoToEdit, onSuccess }) {
       data.append('category_id', formData.category_id);
       data.append('category', selectedCat ? selectedCat.name : '');
 
-      // Direct video file upload
+      // Direct video file upload to Cloudflare R2
+      let finalVideoUrl = formData.video_url.trim();
       if (videoFile) {
+        try {
+          const r2FormData = new FormData();
+          r2FormData.append('file', videoFile);
+          const r2Res = await fetch('/api/upload-video', {
+            method: 'POST',
+            body: r2FormData,
+          });
+          if (r2Res.ok) {
+            const r2Data = await r2Res.json();
+            if (r2Data && r2Data.url) {
+              finalVideoUrl = r2Data.url;
+            }
+          }
+        } catch (r2Err) {
+          console.warn('Direct R2 upload encountered error, falling back to PocketBase:', r2Err);
+        }
+
         data.append('video_file', videoFile);
-        data.append('video_url', formData.video_url.trim() || videoFile.name);
-      } else if (formData.video_url.trim()) {
-        data.append('video_url', formData.video_url.trim());
+        data.append('video_url', finalVideoUrl || videoFile.name);
+      } else if (finalVideoUrl) {
+        data.append('video_url', finalVideoUrl);
       }
       
       if (thumbnailFile) {
