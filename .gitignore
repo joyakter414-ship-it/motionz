@@ -1,0 +1,11 @@
+node_modules/
+dist/
+backup/
+.env
+.env.local
+apps/pocketbase/pb_data/
+apps/pocketbase/pb_snapshots/
+apps/web/plugins/
+*.db-wal
+*.db-shm
+.DS_Store
