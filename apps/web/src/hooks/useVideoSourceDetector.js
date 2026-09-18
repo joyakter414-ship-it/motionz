@@ -54,6 +54,11 @@ export function useVideoSourceDetector(video) {
       return { type: 'vimeo', src: vimeoMatch[1], isValid: true };
     }
 
+    // Direct video URL match (WebM, MP4, R2 or S3 links)
+    if (url.match(/\.(webm|mp4|mov|mkv|ogg)(\?.*)?$/i) || url.includes('.r2.dev') || url.includes('r2.cloudflarestorage.com')) {
+      return { type: 'video', src: url, isValid: true };
+    }
+
     // Fallback: If it's exactly 11 chars, assume YouTube ID
     if (/^[a-zA-Z0-9_-]{11}$/.test(url)) {
       if (R2_BASE_URL) {
