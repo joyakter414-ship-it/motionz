@@ -19,7 +19,12 @@ export async function onRequestOptions() {
 export async function onRequest(context) {
   const { request, params } = context;
   const url = new URL(request.url);
-  const catchall = params.catchall || [];
+  let catchall = params.catchall || [];
+
+  // Handle possible double /api/ prefix (e.g. /api/api/collections/...)
+  if (catchall[0] === 'api') {
+    catchall = catchall.slice(1);
+  }
 
   // Structure: [collectionName, actionOrId, recordIdIfAction]
   const collectionName = catchall[0];

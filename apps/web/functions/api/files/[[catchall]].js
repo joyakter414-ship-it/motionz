@@ -2,7 +2,11 @@ const R2_BASE_URL = 'https://pub-dc2e74d5100540c98a1d252fa2cc7d0b.r2.dev';
 
 export async function onRequest(context) {
   const { params } = context;
-  const catchall = params.catchall || [];
+  let catchall = params.catchall || [];
+
+  if (catchall[0] === 'api') {
+    catchall = catchall.slice(1);
+  }
 
   // Structure: [collectionId, recordId, filename]
   const collectionId = catchall[0];
