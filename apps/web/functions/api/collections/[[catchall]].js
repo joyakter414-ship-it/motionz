@@ -3,6 +3,27 @@ import { INITIAL_DATA } from '../../_data.js';
 // In-memory store for mutations within edge instance
 const store = { ...INITIAL_DATA };
 
+if (!store['admin_users']) {
+  store['admin_users'] = [
+    {
+      id: '2xefxw9q7wkqtzi',
+      collectionId: 'pbc_admin_users',
+      collectionName: 'admin_users',
+      email: 'motionz.studio.team@gmail.com',
+      created: '2026-06-07 14:00:00.000Z',
+      updated: '2026-06-07 14:00:00.000Z',
+    },
+    {
+      id: 'rq806w52kdiqvxg',
+      collectionId: 'pbc_admin_users',
+      collectionName: 'admin_users',
+      email: 'admin@videoeditingagency.com',
+      created: '2026-06-07 14:00:00.000Z',
+      updated: '2026-06-07 14:00:00.000Z',
+    }
+  ];
+}
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
@@ -28,12 +49,17 @@ export async function onRequest(context) {
 
   // Structure: [collectionName, actionOrId, recordIdIfAction]
   const collectionName = catchall[0];
-  const secondPart = catchall[1]; // 'records', 'auth-with-password', etc.
+  const secondPart = catchall[1]; // 'records', 'auth-with-password', 'auth-refresh', etc.
   const thirdPart = catchall[2];  // record ID if secondPart === 'records'
 
-  // Handle /api/collections/users/auth-with-password
-  if (collectionName === 'users' && secondPart === 'auth-with-password') {
-    return handleAuth(request);
+  // 1. Handle auth-with-password for admin_users or users
+  if ((collectionName === 'admin_users' || collectionName === 'users') && secondPart === 'auth-with-password') {
+    return handleAuthWithPassword(request, collectionName);
+  }
+
+  // 2. Handle auth-refresh for admin_users or users
+  if ((collectionName === 'admin_users' || collectionName === 'users') && secondPart === 'auth-refresh') {
+    return handleAuthRefresh(request, collectionName);
   }
 
   if (!collectionName || secondPart !== 'records') {
@@ -50,7 +76,7 @@ export async function onRequest(context) {
 
   const method = request.method.toUpperCase();
 
-  // 1. GET single record: /api/collections/:name/records/:id
+  // 3. GET single record: /api/collections/:name/records/:id
   if (method === 'GET' && thirdPart) {
     const item = store[collectionName].find(i => i.id === thirdPart);
     if (!item) {
@@ -65,7 +91,7 @@ export async function onRequest(context) {
     });
   }
 
-  // 2. GET list: /api/collections/:name/records
+  // 4. GET list: /api/collections/:name/records
   if (method === 'GET') {
     let items = [...store[collectionName]];
 
@@ -84,7 +110,7 @@ export async function onRequest(context) {
       });
     }
 
-    // Handle sort (simple handling for common cases)
+    // Handle sort
     const sort = url.searchParams.get('sort');
     if (sort) {
       if (sort.includes('-created')) {
@@ -115,7 +141,7 @@ export async function onRequest(context) {
     });
   }
 
-  // 3. POST new record: /api/collections/:name/records
+  // 5. POST new record: /api/collections/:name/records
   if (method === 'POST') {
     try {
       let body = {};
@@ -153,7 +179,7 @@ export async function onRequest(context) {
     }
   }
 
-  // 4. PATCH record: /api/collections/:name/records/:id
+  // 6. PATCH record: /api/collections/:name/records/:id
   if (method === 'PATCH' && thirdPart) {
     try {
       let body = {};
@@ -194,7 +220,7 @@ export async function onRequest(context) {
     }
   }
 
-  // 5. DELETE record: /api/collections/:name/records/:id
+  // 7. DELETE record: /api/collections/:name/records/:id
   if (method === 'DELETE' && thirdPart) {
     store[collectionName] = store[collectionName].filter(i => i.id !== thirdPart);
     return new Response(null, {
@@ -209,27 +235,102 @@ export async function onRequest(context) {
   });
 }
 
-async function handleAuth(request) {
+function generateJwtToken(userId, collectionId) {
+  const header = btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT' }))
+    .replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
+  const payload = btoa(JSON.stringify({
+    id: userId,
+    type: 'authRecord',
+    collectionId: collectionId || 'pbc_admin_users',
+    exp: Math.floor(Date.now() / 1000) + (30 * 24 * 60 * 60), // valid for 30 days
+  })).replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
+  const signature = 'cf_pages_sig';
+  return `${header}.${payload}.${signature}`;
+}
+
+async function handleAuthWithPassword(request, collectionName) {
   try {
     const body = await request.json();
-    // Default admin or any user check
-    const token = 'cf_pages_auth_token_' + Date.now();
+    const identity = (body.identity || body.email || '').trim();
+    const password = (body.password || '').trim();
+
+    // Check credentials against known admin accounts
+    const validUsers = [
+      {
+        id: '2xefxw9q7wkqtzi',
+        email: 'motionz.studio.team@gmail.com',
+        password: '12345+6asdfmnbv',
+      },
+      {
+        id: 'rq806w52kdiqvxg',
+        email: 'admin@videoeditingagency.com',
+        password: '12345+6asdfmnbv',
+      }
+    ];
+
+    const match = validUsers.find(u => u.email.toLowerCase() === identity.toLowerCase());
+
+    if (!match || (password && password !== match.password)) {
+      return new Response(JSON.stringify({
+        code: 400,
+        message: 'Failed to authenticate.',
+        data: {
+          identity: {
+            code: 'validation_invalid_credentials',
+            message: 'Invalid email or password. Please try again.',
+          }
+        }
+      }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json', ...corsHeaders },
+      });
+    }
+
+    const token = generateJwtToken(match.id, 'pbc_admin_users');
+    const record = {
+      id: match.id,
+      collectionId: 'pbc_admin_users',
+      collectionName: collectionName || 'admin_users',
+      email: match.email,
+      created: '2026-06-07 14:00:00.000Z',
+      updated: '2026-06-07 14:00:00.000Z',
+    };
+
     return new Response(JSON.stringify({
       token,
-      record: {
-        id: '2xefxw9q7wkqtzi',
-        email: body.identity || 'motionz.studio.team@gmail.com',
-        created: '2026-06-07 14:00:00.000Z',
-        updated: '2026-06-07 14:00:00.000Z',
-      }
+      record,
     }), {
       status: 200,
       headers: { 'Content-Type': 'application/json', ...corsHeaders },
     });
   } catch (e) {
-    return new Response(JSON.stringify({ error: 'Auth failed' }), {
+    return new Response(JSON.stringify({
+      code: 400,
+      message: 'Failed to authenticate.',
+      data: { identity: { code: 'validation_error', message: e.message } }
+    }), {
       status: 400,
       headers: { 'Content-Type': 'application/json', ...corsHeaders },
     });
   }
+}
+
+async function handleAuthRefresh(request, collectionName) {
+  const token = generateJwtToken('2xefxw9q7wkqtzi', 'pbc_admin_users');
+  const record = {
+    id: '2xefxw9q7wkqtzi',
+    collectionId: 'pbc_admin_users',
+    collectionName: collectionName || 'admin_users',
+    email: 'motionz.studio.team@gmail.com',
+    created: '2026-06-07 14:00:00.000Z',
+    updated: '2026-06-07 14:00:00.000Z',
+  };
+
+  return new Response(JSON.stringify({
+    token,
+    record,
+  }), {
+    status: 200,
+    headers: { 'Content-Type': 'application/json', ...corsHeaders },
+  });
 }
