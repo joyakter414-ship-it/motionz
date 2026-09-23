@@ -10,3 +10,5 @@ apps/web/plugins/
 *.db-shm
 apps/pocketbase/pocketbase*
 .DS_Store
+.wrangler/
+
