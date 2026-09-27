@@ -52,14 +52,16 @@ function PortfolioPage() {
     ? projects 
     : projects.filter(project => 
         project.category_id === activeCategory || 
-        project.expand?.category_id?.id === activeCategory
+        project.expand?.category_id?.id === activeCategory ||
+        project.category === activeCategory
       );
 
   return (
     <>
       <Helmet>
-        <title>Portfolio - Our Video Editing Work | MotionZ</title>
-        <meta name="description" content="Browse our portfolio of video editing projects including short form, long form, motion graphics, and color grading work." />
+        <title>Portfolio - Video Editing Work &amp; Projects | MotionZ motionz.pro</title>
+        <meta name="description" content="Browse our complete portfolio of video editing projects on motionz.pro including TikTok/Reels short-form, podcasts, real estate, and motion graphics." />
+        <link rel="canonical" href="https://motionz.pro/portfolio" />
       </Helmet>
 
       <Header />

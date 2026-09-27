@@ -53,8 +53,9 @@ function PricingPage() {
   return (
     <>
       <Helmet>
-        <title>Pricing - Video Editing Plans | MotionZ</title>
-        <meta name="description" content="Flexible video editing pricing plans. Choose the plan that fits your content creation needs." />
+        <title>Pricing Plans - Video Editing Packages | MotionZ motionz.pro</title>
+        <meta name="description" content="Flexible video editing pricing plans on motionz.pro. Growth, AI Workflow, and Premium Packages designed for creators and businesses. No hidden fees." />
+        <link rel="canonical" href="https://motionz.pro/pricing" />
       </Helmet>
 
       <Header />

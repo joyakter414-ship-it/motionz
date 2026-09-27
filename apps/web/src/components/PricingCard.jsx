@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
-function PricingCard({ tier, price, features, isPopular = false, index = 0 }) {
+function PricingCard({ tier, price, features, isPopular = false, index = 0, onSelect }) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -37,6 +37,7 @@ function PricingCard({ tier, price, features, isPopular = false, index = 0 }) {
         ))}
       </ul>
       <Button 
+        onClick={onSelect || (() => window.open('https://wa.me/8801518904165', '_blank'))}
         className={`w-full transition-all duration-300 ${
           isPopular 
             ? 'bg-primary text-primary-foreground hover:bg-accent hover:gold-glow-strong' 

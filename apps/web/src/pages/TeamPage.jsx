@@ -38,8 +38,9 @@ function TeamPage() {
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <Helmet>
-        <title>Our Team | MotionZ</title>
-        <meta name="description" content="Meet the creative minds behind MotionZ. Our team of expert video editors and creators." />
+        <title>Our Team - Expert Video Editors &amp; Creators | MotionZ motionz.pro</title>
+        <meta name="description" content="Meet the creative minds behind MotionZ (motionz.pro). Our collective of expert video editors, motion designers, and creative directors." />
+        <link rel="canonical" href="https://motionz.pro/team" />
       </Helmet>
 
       <Header />

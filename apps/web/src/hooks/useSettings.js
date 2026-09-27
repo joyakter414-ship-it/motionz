@@ -1,8 +1,14 @@
 import { useState, useEffect } from 'react';
 import pb from '@/lib/pocketbaseClient.js';
 
+const DEFAULT_SETTINGS = {
+  id: 'twk0gx6rafozn6e',
+  whatsapp_number: '+8801518904165',
+  email_address: 'motionz.studio.team@gmail.com'
+};
+
 export function useSettings() {
-  const [settings, setSettings] = useState({ whatsapp_number: '', email_address: '' });
+  const [settings, setSettings] = useState(DEFAULT_SETTINGS);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
